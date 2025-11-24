@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Capture Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 10px; max-width: 600px; width: 90%; }
+        video { width: 100%; max-height: 400px; background: black; border-radius: 8px; }
+        #capturedImage { max-width: 100%; margin: 20px 0; border-radius: 8px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <h1>📷 Camera Capture Test</h1>
+    
+    <button onclick="openCamera()">Open Camera</button>
+    <button onclick="testFileInput()">Test File Input (Fallback)</button>
+    
+    <input type="file" id="fileInput" accept="image/*" capture="environment" class="hidden" onchange="handleFile(event)">
+    
+    <!-- Camera Modal -->
+    <div id="cameraModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3>Capture Plant Photo</h3>
+                <button onclick="closeCamera()" style="background: #dc3545;">✕</button>
+            </div>
+            
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas" class="hidden"></canvas>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button onclick="closeCamera()">Cancel</button>
+                <button onclick="capturePhoto()" style="background: #28a745;">📸 Capture</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="result"></div>
+    <img id="capturedImage" class="hidden">
+
+    <script>
+        let stream = null;
+        
+        function showResult(message, isSuccess = true) {
+            document.getElementById('result').innerHTML = 
+                `<div style="padding: 10px; margin: 10px 0; border-radius: 4px; background: ${isSuccess ? '#d4edda' : '#f8d7da'}; color: ${isSuccess ? '#155724' : '#721c24'};">${message}</div>`;
+        }
+        
+        async function openCamera() {
+            try {
+                showResult('🔄 Opening camera...');
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',  // Use back camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+                
+                document.getElementById('cameraModal').style.display = 'flex';
+                showResult('✅ Camera opened! Position your plant and click capture.');
+                
+            } catch (error) {
+                console.error('Camera error:', error);
+                
+                if (error.name === 'NotAllowedError') {
+                    showResult('❌ Camera access denied. Please allow camera access and try again.', false);
+                } else if (error.name === 'NotFoundError') {
+                    showResult('❌ No camera found. Using file input instead...', false);
+                    testFileInput();
+                } else {
+                    showResult(`❌ Camera error: ${error.message}. Try file input instead.`, false);
+                }
+            }
+        }
+        
+        function capturePhoto() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to video size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0);
+            
+            // Convert to image data
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Show captured image
+            const img = document.getElementById('capturedImage');
+            img.src = imageData;
+            img.classList.remove('hidden');
+            
+            showResult(`✅ Photo captured! Size: ${canvas.width}x${canvas.height}px`);
+            
+            closeCamera();
+        }
+        
+        function closeCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            document.getElementById('cameraModal').style.display = 'none';
+        }
+        
+        function testFileInput() {
+            document.getElementById('fileInput').click();
+        }
+        
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showResult(`✅ File selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('capturedImage');
+                    img.src = e.target.result;
+                    img.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('cameraModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCamera();
+            }
+        });
+        
+        window.onload = function() {
+            showResult('📱 Ready to test camera capture. Click "Open Camera" to start.');
+        };
+    </script>
+</body>
+</html>

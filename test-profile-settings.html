@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile Settings Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        .card { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .tabs { display: flex; margin-bottom: 30px; border-bottom: 2px solid #e9ecef; }
+        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tab.active { border-bottom-color: #007bff; color: #007bff; font-weight: bold; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .form-group { margin: 20px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .profile-header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #e9ecef; }
+        .avatar { width: 60px; height: 60px; background: #007bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold; }
+        .user-info h3 { margin: 0; font-size: 20px; }
+        .user-info p { margin: 5px 0 0 0; color: #6c757d; }
+        .result { margin: 20px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>⚙️ Profile Settings</h1>
+        <p style="color: #6c757d; margin-bottom: 30px;">Manage your account settings and preferences</p>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('profile')">Profile Info</div>
+            <div class="tab" onclick="switchTab('password')">Password</div>
+        </div>
+        
+        <!-- Profile Tab -->
+        <div id="profile-tab" class="tab-content active">
+            <div class="profile-header">
+                <div class="avatar">JD</div>
+                <div class="user-info">
+                    <h3>John Doe</h3>
+                    <p>john.doe@example.com</p>
+                </div>
+            </div>
+            
+            <form onsubmit="updateProfile(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="fullName" value="John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" value="john.doe@example.com" required>
+                </div>
+                
+                <button type="submit" id="profileBtn">💾 Update Profile</button>
+            </form>
+        </div>
+        
+        <!-- Password Tab -->
+        <div id="password-tab" class="tab-content">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 30px;">
+                <span style="font-size: 20px;">🔒</span>
+                <h3 style="margin: 0;">Change Password</h3>
+            </div>
+            
+            <form onsubmit="updatePassword(event)">
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" id="currentPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>New Password</label>
+                    <input type="password" id="newPassword" minlength="6" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirm New Password</label>
+                    <input type="password" id="confirmPassword" minlength="6" required>
+                </div>
+                
+                <button type="submit" id="passwordBtn">🔐 Update Password</button>
+            </form>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showResult(message, isSuccess = true) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<div class="${isSuccess ? 'success' : 'error'}">${message}</div>`;
+            
+            setTimeout(() => {
+                result.innerHTML = '';
+            }, 3000);
+        }
+        
+        function updateProfile(event) {
+            event.preventDefault();
+            
+            const fullName = document.getElementById('fullName').value;
+            const email = document.getElementById('email').value;
+            
+            const btn = document.getElementById('profileBtn');
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Update profile header
+                document.querySelector('.user-info h3').textContent = fullName;
+                document.querySelector('.user-info p').textContent = email;
+                
+                // Update avatar initials
+                const initials = fullName.split(' ').map(n => n[0]).join('').toUpperCase();
+                document.querySelector('.avatar').textContent = initials;
+                
+                showResult('✅ Profile updated successfully!');
+                
+                btn.disabled = false;
+                btn.textContent = '💾 Update Profile';
+            }, 1000);
+        }
+        
+        function updatePassword(event) {
+            event.preventDefault();
+            
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (newPassword !== confirmPassword) {
+                showResult('❌ New passwords do not match!', false);
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showResult('❌ Password must be at least 6 characters long!', false);
+                return;
+            }
+            
+            const btn = document.getElementById('passwordBtn');
+            btn.disabled = true;
+            btn.textContent = 'Updating...';
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Clear form
+                document.getElementById('currentPassword').value = '';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+                
+                showResult('✅ Password updated successfully!');
+                
+                btn.disabled = false;
+                btn.textContent = '🔐 Update Password';
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

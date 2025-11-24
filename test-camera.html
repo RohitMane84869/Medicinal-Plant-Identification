@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 10px; }
+        button:hover { background: #0056b3; }
+        #preview { max-width: 100%; margin: 20px 0; }
+        .result { margin: 20px 0; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>📷 Camera Access Test</h1>
+    
+    <button onclick="testCameraAccess()">Test Camera Permission</button>
+    <button onclick="openFileInput()">Test File Input</button>
+    
+    <input type="file" id="fileInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFile(event)">
+    
+    <div id="result"></div>
+    <img id="preview" style="display: none;">
+
+    <script>
+        function showResult(message, isSuccess = true) {
+            document.getElementById('result').innerHTML = 
+                `<div class="${isSuccess ? 'success' : 'error'}">${message}</div>`;
+        }
+        
+        async function testCameraAccess() {
+            try {
+                showResult('🔄 Requesting camera permission...');
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                
+                showResult('✅ Camera access granted! You can now use camera capture.');
+                
+                // Stop the stream
+                stream.getTracks().forEach(track => track.stop());
+                
+            } catch (error) {
+                console.error('Camera error:', error);
+                
+                if (error.name === 'NotAllowedError') {
+                    showResult('❌ Camera access denied. Please allow camera access in browser settings.', false);
+                } else if (error.name === 'NotFoundError') {
+                    showResult('❌ No camera found on this device.', false);
+                } else {
+                    showResult(`❌ Camera error: ${error.message}`, false);
+                }
+            }
+        }
+        
+        function openFileInput() {
+            document.getElementById('fileInput').click();
+        }
+        
+        function handleFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                showResult(`✅ File selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Auto-test on page load
+        window.onload = function() {
+            showResult('📱 Ready to test camera access. Click the button above.');
+        };
+    </script>
+</body>
+</html>
